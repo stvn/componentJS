@@ -1,7 +1,6 @@
 (function (global, undefined) {
   var componentJS = {
     version: "0.1",
-    rootDir: 'src/',
     registry: {
         __counter: 0,
         __cache: {},
@@ -21,9 +20,7 @@
         }
     },
 
-    base: function () {
-      //component Implementation below
-    },
+    base: function () {/**Implementation comes from prototypes**/ },
    
     utils: {
       mixin: function (obj, source) {
@@ -56,32 +53,26 @@
         return o;
       },
 
-      require: function (names) {
-        names = Array.prototype.slice.call(arguments);
-        for (var i=0, ii= names.length; i < ii; i ++) {
-          var scriptName = 'loadedScript_' + names[i];
-          
-          if (this.registry.get(scriptName)) { return; }
-          
-          var script = document.createElement('script'),
-              split = names[i].split('.'),
-              source = componentJS.rootDir;
-          
-          for (var j=1, jj=split.length; j < jj; j++) {
-            source += split[j];
-            if (j == jj - 1) {
-              source += '.js';
-            } else {
-              source += '/';
+      moduleWrapper: function (fn, waitForDom) {
+        if (waitForDom) {
+          global.onload = function () {
+            callFn();
+          };
+
+          global.readystatechange = function () {
+            if (global.readystate == 'true') {
+              callFn();
             }
           }
-          script.setAttribute('src', source);
-          script.setAttribute('type', 'text/javascript');
-          document.head.appendChild(script);
-          this.registry.set(scriptName, true);
-        }
-      }
 
+        } else {
+          callFn();
+        }
+
+        function callFn() {
+          fn();
+        }
+      } 
     }
   };
 
@@ -130,14 +121,12 @@
   };
 
   //Add componentJS to global namespace
-  global.$com = {
+  global.cjs = {
     base: new componentJS.base(),
     registry: componentJS.registry,
     utils: componentJS.utils,
     ns: componentJS.utils.ns,
-    require: componentJS.utils.require
+    ready: componentJS.utils.moduleWrapper
   }
-
-  $com.registry.set('loadedScript_$com.components.base', 'true');
   console.info("Using componentJS version: " + componentJS.version);
 }(window))
